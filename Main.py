@@ -8,7 +8,7 @@ from CustomLayers import CannyEdgeLayer
 
 # set paths to the images and CSV containing all labels. 
 dataset_path = 'A:/OneDrive/Documents/Uni/preprocessed_img'
-label_path = 'A:/OneDrive/Documents/Uni/ImageProcessingAssignment/labels.csv'
+label_path = 'A:/OneDrive/Documents/GitHub/ImageProcessingAssignment/labels.csv'
 
 # read the CSV, which contains image filepaths and labels. 
 df = pd.read_csv(label_path)
@@ -41,7 +41,7 @@ num_classes = len(np.unique(y_data))
 # Build a model using convolutional layers
 model = tf.keras.Sequential([
     # define the shape of the input - images are 32x32 pixels with 1 channel
-    tf.keras.Input(shape=(32, 32, 1)),
+    tf.keras.Input(shape=(64, 64, 1)),
     CannyEdgeLayer(low=0.1, high=0.3),
     tf.keras.layers.ReLU(),
     tf.keras.layers.Flatten(),
