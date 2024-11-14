@@ -1,5 +1,6 @@
 import tensorflow as tf
-from Kernels import sobel_kernel_x, sobel_kernel_y, gaussian_kernel
+import numpy as np
+from Kernels import *
 
 # Define a custom layer for use with defined kernels
 class CustomConvLayer(tf.keras.layers.Layer):
@@ -15,7 +16,54 @@ class CustomConvLayer(tf.keras.layers.Layer):
     def call(self, inputs):
         return tf.nn.conv2d(inputs, self.kernel, strides=1, padding='SAME')
     
-    # Define a custom layer for canny edge detection. 
+# Define a custom 2D convolutional layer
+class CustomConv2D(tf.keras.layers.Layer):
+    def __init__(self, filters, kernel_size, kernel_initializer = None, padding = 'valid', activation = None, **kwargs):
+        super(CustomConv2D, self).__init__(**kwargs)
+        # The number of filters for the layer
+        self.filters = filters
+        # the size of the kernel to be used
+        self.kernel_size = kernel_size
+        # determines if the image size is the same or reduced (will stay the same)
+        self.padding = padding
+        # any activations to occur after the convolution (I.E ReLU)
+        self.activation = tf.keras.activations.get(activation)
+        # used to initialize pre-defined kernels
+        self.kernel_initializer = kernel_initializer 
+
+    def build(self, input_shape):
+        # define the shape of the kernel, including the number of channels (input_shape) and number of filters
+        kernel_shape = (*self.kernel_size, input_shape[-1], self.filters)
+        # has a custom kernel initializer been provided?
+        if self.kernel_initializer is not None:
+            # if yes, use it to create the kernel weights. 
+            self.kernel = self.add_weight(name = "kernel",
+                                          shape = kernel_shape,
+                                          initializer = tf.constant_initializer(self.kernel_initializer),
+                                          trainable = True)
+        else:
+            # if no, use the defauly glorot_uniform to create kernel weights. 
+            self.kernel = self.add_weight(name = "kernel",
+                                          shape = kernel_shape,
+                                          initializer = "glorot_uniform",
+                                          trainable = True)
+        # define the bias weight for the layer.
+        self.bias = self.add_weight(name = "bias",
+                                    shape = (self.filters,),
+                                    initializer = "zeros",
+                                    trainable = True)
+    
+    def call(self, inputs):
+        # perform 2D convolution. 
+        output = tf.nn.conv2d(inputs, self.kernel, strides = 1, padding = self.padding.upper())
+        # add the bias to the output of the convolution
+        output = tf.nn.bias_add(output, self.bias)
+        # apply any activation functions that have been set
+        if self.activation is not None:
+            output = self.activation(output)
+        return output
+    
+# Define a custom layer for canny edge detection. 
 class CannyEdgeLayer(tf.keras.layers.Layer):
 
     # low = lower threshold for hysteresis
@@ -168,3 +216,4 @@ class CannyEdgeLayer(tf.keras.layers.Layer):
         config.update({'low_threshold': self.low,
                        'high_threshold': self.high})
         return config
+
