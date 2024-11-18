@@ -4,11 +4,25 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from Functions import load_images
-from CustomLayers import CannyEdgeLayer
+from CustomLayers import *
+from Kernels import *
 
 # set paths to the images and CSV containing all labels. 
-dataset_path = 'A:/OneDrive/Documents/Uni/preprocessed_img'
-label_path = 'A:/OneDrive/Documents/GitHub/ImageProcessingAssignment/labels.csv'
+dataset_path = 'K:/preprocessed_img'
+label_path = 'K:/ImageProcessingAssignment/labels.csv'
+
+# define filter combinations for CustomConv2D
+kernel_combo_1 = np.stack([high_pass_kernel, 
+                           sharpen_kernel,
+                           sobel_kernel_x, 
+                           sobel_kernel_y, 
+                           prewitt_kernel_x, 
+                           prewitt_kernel_y, 
+                           laplacian_kernel,
+                           box_blur_kernel,
+                           emboss_kernel,
+                           ], axis = 1)
+kernel_combo_1 = np.expand_dims(kernel_combo_1, axis=-2)
 
 # read the CSV, which contains image filepaths and labels. 
 df = pd.read_csv(label_path)
@@ -42,10 +56,11 @@ num_classes = len(np.unique(y_data))
 model = tf.keras.Sequential([
     # define the shape of the input - images are 32x32 pixels with 1 channel
     tf.keras.Input(shape=(64, 64, 1)),
-    CannyEdgeLayer(low=0.1, high=0.3),
+    CustomConvLayer(gaussian_kernel),
+    CustomConv2D(filters = 9, kernel_size= (3, 3), kernel_initializer=kernel_combo_1, padding = 'same', activation='relu'),
     tf.keras.layers.ReLU(),
+    CannyEdgeLayer(low=0.1, high=0.3),
     tf.keras.layers.Flatten(),
-    tf.keras.layers.Dense(128, activation='relu'),  # Add a dense layer for classification
     tf.keras.layers.Dense(num_classes, activation='softmax')  # Output layer with softmax activation
 ])
 

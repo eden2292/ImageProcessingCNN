@@ -88,13 +88,19 @@ class CannyEdgeLayer(tf.keras.layers.Layer):
         super(CannyEdgeLayer, self).build(input_shape)
 
     def call(self, inputs):
-        # apply canny edge detection to the input image
-        # blur/smooth image to reduce noise
-        blurred = tf.nn.conv2d(inputs, self.gaussian_kernel, strides=1, padding='SAME')
+        num_channels = tf.shape(inputs)[-1]
 
-        # find gradients 
-        gradient_x = tf.nn.depthwise_conv2d(blurred, self.sobel_x, strides=[1, 1, 1, 1], padding='SAME')
-        gradient_y = tf.nn.depthwise_conv2d(blurred, self.sobel_y, strides=[1, 1, 1, 1], padding ='SAME')
+        # Adjust kernels for multi-channel input
+        gaussian_kernel = tf.tile(self.gaussian_kernel, [1, 1, num_channels, 1])
+        sobel_x = tf.tile(self.sobel_x, [1, 1, num_channels, 1])
+        sobel_y = tf.tile(self.sobel_y, [1, 1, num_channels, 1])
+
+        # Apply Gaussian blur
+        blurred = tf.nn.depthwise_conv2d(inputs, gaussian_kernel, strides=[1, 1, 1, 1], padding='SAME')
+
+        # Compute gradients
+        gradient_x = tf.nn.depthwise_conv2d(blurred, sobel_x, strides=[1, 1, 1, 1], padding='SAME')
+        gradient_y = tf.nn.depthwise_conv2d(blurred, sobel_y, strides=[1, 1, 1, 1], padding='SAME')
 
         # calculate edge strength and orientation
         gradient_magnitude = tf.sqrt(tf.square(gradient_x) + tf.square(gradient_y))
