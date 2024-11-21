@@ -2,8 +2,8 @@ import os
 import tensorflow as tf
 
 # set paths to the images and CSV containing all labels. 
-dataset_path = 'A:/Documents/Uni/preprocessed_img'
-label_path = 'A:/Documents/Uni/ImageProcessingAssignment/labels.csv'
+dataset_path = 'K:/preprocessed_img'
+label_path = 'K:/ImageProcessingAssignment/labels.csv'
 
 # function to load images from dataset
 def load_images(image_name, dataset_path):
