@@ -57,29 +57,31 @@ model = tf.keras.Sequential([
     # Input layer
     tf.keras.Input(shape=(64, 64, 1)),
     
-    # Custom convolutional layers
+    # Custom convolutional layers with batch normalization
     CustomConvLayer(gaussian_kernel),
-    tf.keras.layers.Dropout(0.2),  # Dropout after the first convolutional layer
+    tf.keras.layers.BatchNormalization(),  # Added batch normalization
     CustomConv2D(filters=9, kernel_size=(3, 3), kernel_initializer=kernel_combo_1, padding='same', activation='relu'),
+    tf.keras.layers.BatchNormalization(),  # Added batch normalization
     tf.keras.layers.ReLU(),
-    tf.keras.layers.Dropout(0.3),  # Dropout after the second convolutional layer
     
     # Custom edge detection layer
     CannyEdgeLayer(low=0.1, high=0.3),
     
-    # Flatten and dense layers with Dropout
+    # Flatten and fully connected layers
     tf.keras.layers.Flatten(),
-    tf.keras.layers.Dropout(0.4),  # Dropout before the output layer
+    tf.keras.layers.BatchNormalization(),  # Added batch normalization
     
     # Output layer
-    tf.keras.layers.Dense(num_classes, activation='softmax')  # Output layer with softmax activation
+    tf.keras.layers.Dense(num_classes, activation='softmax')  # Output layer
 ])
 
 # Compile the model
-model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001), 
+              loss='sparse_categorical_crossentropy', 
+              metrics=['accuracy'])
 
 # Train the model
-model.fit(x_train, y_train, epochs=10, validation_data=(x_test, y_test))
+model.fit(x_train, y_train, epochs=5, validation_data=(x_test, y_test))
 
 # Evaluate the model on the test set
 test_loss, test_acc = model.evaluate(x_test, y_test)
