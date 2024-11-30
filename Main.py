@@ -52,25 +52,25 @@ x_train, x_test, y_train, y_test = train_test_split(x_data, y_data, test_size=0.
 # Get the number of unique classes
 num_classes = len(np.unique(y_data))
 
+# make the canny edge layer not a training layer
+canny_layer = CannyEdgeLayer
+canny_layer.trainable = False
+
 # Build a model using convolutional layers with Dropout to reduce overfitting
 model = tf.keras.Sequential([
     # Input layer
     tf.keras.Input(shape=(64, 64, 1)),
-    
+    # Custom edge detection layer
+    canny_layer(low=0.1, high=0.3),
     # Custom convolutional layers with batch normalization
     CustomConvLayer(gaussian_kernel),
-    tf.keras.layers.BatchNormalization(),  # Added batch normalization
+    tf.keras.layers.BatchNormalization(),
     CustomConv2D(filters=9, kernel_size=(3, 3), kernel_initializer=kernel_combo_1, padding='same', activation='relu'),
-    tf.keras.layers.BatchNormalization(),  # Added batch normalization
+    tf.keras.layers.BatchNormalization(),
     tf.keras.layers.ReLU(),
-    
-    # Custom edge detection layer
-    CannyEdgeLayer(low=0.1, high=0.3),
-    
     # Flatten and fully connected layers
     tf.keras.layers.Flatten(),
-    tf.keras.layers.BatchNormalization(),  # Added batch normalization
-    
+    tf.keras.layers.BatchNormalization(), 
     # Output layer
     tf.keras.layers.Dense(num_classes, activation='softmax')  # Output layer
 ])
